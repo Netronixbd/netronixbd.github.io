@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ops Provisioning Pro | v1.9.2 Stable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #020617 0%, #0f172a 100%); color: #f1f5f9; min-height: 100vh; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 2.5rem; }
+        .alarm-row { border: 2.5px solid #f43f5e !important; background: rgba(244, 63, 94, 0.1) !important; animation: glow-red 2s infinite; }
+        @keyframes glow-red { 0%, 100% { box-shadow: 0 0 10px rgba(244, 63, 94, 0.1); } 50% { box-shadow: 0 0 30px rgba(244, 63, 94, 0.4); } }
+        .compliance-font { font-family: 'Times New Roman', Times, serif !important; font-style: normal !important; }
+        input, select, textarea { background: rgba(15, 23, 42, 0.9) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: #fff !important; font-size: 14px; }
+        .service-card { background: rgba(255, 255, 255, 0.02); padding: 12px; border-radius: 1.2rem; border: 1px solid rgba(255,255,255,0.05); }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="container mx-auto mb-10 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div>
+            <h1 class="text-4xl font-black italic tracking-tighter uppercase text-white">Network <span class="text-indigo-400">Compliance</span></h1>
+            <p class="text-slate-500 text-[10px] uppercase tracking-[6px] font-bold mt-1">Master Control v1.9.2</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="bg-white/10 hover:bg-white/20 text-indigo-400 px-6 py-4 rounded-2xl font-black text-[10px] tracking-widest border border-white/10 transition-all uppercase italic">
+                <i class="fas fa-chart-pie mr-2"></i> Back to Main Billing
+            </a>
+            <div id="clock" class="text-2xl font-mono font-black bg-indigo-500/10 px-8 py-4 rounded-2xl border border-indigo-500/20 shadow-2xl">00:00:00</div>
+        </div>
+    </header>
+
+    <main class="container mx-auto">
+        <section class="glass-panel p-10 mb-12 shadow-2xl border-t-4 border-indigo-600">
+            <form id="multiServiceForm">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <input type="text" id="custName" class="rounded-xl p-4 font-bold" placeholder="Client Identity Name *" required>
+                    <select id="requestedBy" class="rounded-xl p-4 font-bold" onchange="checkOthers(this.value)" required>
+                        <option value="">Requested By *</option>
+                        <option value="Marketing Concern">Marketing Concern</option>
+                        <option value="Team Leader">Team Leader</option>
+                        <option value="Customer Request">Customer Request</option>
+                        <option value="Others">Others Person</option>
+                    </select>
+                    <input type="text" id="othersInput" class="rounded-xl p-4 font-bold hidden" placeholder="Enter Requestor Name *">
+                    <select id="executedBy" class="rounded-xl p-4 font-bold" required>
+                        <option value="">Assigned Engineer *</option>
+                        <option value="MR. Amir Hosan">MR. Amir Hosan</option>
+                        <option value="MR. Niaz Morshed">MR. Niaz Morshed</option>
+                        <option value="MR. Abdullah Al Mamun">MR. Abdullah Al Mamun</option>
+                        <option value="MR. Mahmudul Hasan">MR. Mahmudul Hasan</option>
+                    </select>
+                </div>
+
+                <p class="text-[11px] font-black uppercase text-indigo-400 mb-6 tracking-[3px] border-b border-indigo-500/20 pb-2">Service Provisioning Matrix</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                    <script>
+                        const allServices = ['IPT', 'GGC', 'FNA', 'BDIX', 'CDN', 'AKAMAI', 'PNI', 'BCDN'];
+                        allServices.forEach(s => {
+                            document.write(`
+                                <div class="service-card space-y-3">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-black text-xs text-slate-300 uppercase underline underline-offset-4 decoration-indigo-500">${s}</span>
+                                        <select id="${s}_mode" class="p-1 rounded bg-slate-800 text-[10px]" onchange="toggleInputs('${s}')">
+                                            <option value="">No Change</option>
+                                            <option value="Uncap">Uncapped</option>
+                                            <option value="Modified">Modified</option>
+                                        </select>
+                                    </div>
+                                    <div id="${s}_fields" class="grid grid-cols-2 gap-2 hidden">
+                                        <input type="number" step="any" id="${s}_base" class="p-2 rounded bg-slate-900 w-full" placeholder="Base Mb">
+                                        <input type="number" step="any" id="${s}_mod" class="p-2 rounded bg-slate-900 w-full" placeholder="Mod Mb">
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    </script>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="flex items-center gap-4 bg-white/5 p-5 rounded-2xl border border-white/10">
+                        <label class="text-[10px] font-black uppercase text-indigo-400">Duration Period:</label>
+                        <input type="number" step="any" id="durVal" class="w-24 p-2 rounded-lg text-center font-bold text-lg" placeholder="Val" required>
+                        <select id="durUnit" class="p-2 rounded-lg font-bold">
+                            <option value="hours">Hours</option><option value="days">Days</option>
+                        </select>
+                    </div>
+                    <textarea id="reason" class="rounded-2xl p-4 h-20" placeholder="Modification Context & Reference Details..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 py-6 rounded-3xl font-black uppercase tracking-[5px] text-sm shadow-2xl mt-10 transition-all active:scale-[0.98]">Authorize Bulk Sync</button>
+            </form>
+        </section>
+
+        <div class="container mx-auto mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="text" id="searchClient" onkeyup="filterDatabase()" placeholder="🔍 Search Client Name..." class="glass-panel p-4 outline-none border-none text-white font-bold">
+            <select id="searchService" onchange="filterDatabase()" class="glass-panel p-4 outline-none border-none text-white font-bold">
+                <option value="">📡 Filter by Service (All)</option>
+                <option value="IPT">IPT</option><option value="GGC">GGC</option><option value="FNA">FNA</option>
+                <option value="BDIX">BDIX</option><option value="CDN">CDN</option><option value="AKAMAI">AKAMAI</option>
+                <option value="PNI">PNI</option><option value="BCDN">BCDN</option>
+            </select>
+        </div>
+
+        <section class="glass-panel overflow-hidden shadow-2xl mb-20">
+            <div class="overflow-x-auto p-8">
+                <table class="w-full text-left border-separate border-spacing-y-6">
+                    <thead>
+                        <tr class="text-slate-500 text-[11px] font-black uppercase tracking-[4px]">
+                            <th class="px-8">Client Inventory</th>
+                            <th class="px-8">Service Modifications</th>
+                            <th class="px-8 text-center">Countdown</th>
+                            <th class="px-8 text-center">Control</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dbBody" class="compliance-font"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal" class="fixed inset-0 z-[2000] hidden flex items-center justify-center p-6 bg-black/85 backdrop-blur-md">
+        <div class="glass-panel bg-slate-900 max-w-xl w-full p-10 border border-indigo-500/40 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <h3 class="text-3xl font-black uppercase italic tracking-tighter mb-8 text-indigo-400 border-b border-white/10 pb-4">Audit Record Signature</h3>
+            <div id="modalContent" class="space-y-6 font-sans"></div>
+            <button onclick="closeModal()" class="w-full mt-10 bg-indigo-600 p-4 rounded-xl font-black uppercase text-[12px] tracking-widest">Close Audit View</button>
+        </div>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('jesan_provision_v1.9.2')) || [];
+        const mainServiceList = ['IPT', 'GGC', 'FNA', 'BDIX', 'CDN', 'AKAMAI', 'PNI', 'BCDN'];
+
+        function checkOthers(val) { document.getElementById('othersInput').classList.toggle('hidden', val !== 'Others'); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        
+        function toggleInputs(s) {
+            const mode = document.getElementById(`${s}_mode`).value;
+            const fieldGroup = document.getElementById(`${s}_fields`);
+            fieldGroup.classList.toggle('hidden', mode !== 'Modified');
+            if(mode === 'Modified') {
+                document.getElementById(`${s}_base`).required = true;
+                document.getElementById(`${s}_mod`).required = true;
+            } else {
+                document.getElementById(`${s}_base`).required = false;
+                document.getElementById(`${s}_mod`).required = false;
+            }
+        }
+
+        document.getElementById('multiServiceForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const dur = parseFloat(document.getElementById('durVal').value);
+            const unit = document.getElementById('durUnit').value;
+            const expiry = Date.now() + (dur * (unit === 'hours' ? 3600000 : 86400000));
+
+            const provisionedData = [];
+            mainServiceList.forEach(s => {
+                const mode = document.getElementById(`${s}_mode`).value;
+                if(mode) {
+                    provisionedData.push({
+                        type: s,
+                        mode: mode,
+                        base: mode === 'Modified' ? document.getElementById(`${s}_base`).value : 'Standard',
+                        mod: mode === 'Modified' ? document.getElementById(`${s}_mod`).value : 'UNCAPPED'
+                    });
+                }
+            });
+
+            if(provisionedData.length === 0) return alert("Select at least one service change!");
+
+            const record = {
+                id: Date.now(),
+                name: document.getElementById('custName').value,
+                req: document.getElementById('requestedBy').value === 'Others' ? document.getElementById('othersInput').value : document.getElementById('requestedBy').value,
+                eng: document.getElementById('executedBy').value,
+                data: provisionedData,
+                reason: document.getElementById('reason').value,
+                expiry: expiry,
+                added: new Date().toLocaleString()
+            };
+
+            db.push(record);
+            localStorage.setItem('jesan_provision_v1.9.2', JSON.stringify(db));
+            e.target.reset();
+            mainServiceList.forEach(s => document.getElementById(`${s}_fields`).classList.add('hidden'));
+            renderInitialTable();
+        });
+
+        function renderInitialTable(filteredDb = db) {
+            const tbody = document.getElementById('dbBody');
+            tbody.innerHTML = '';
+
+            filteredDb.forEach((d, i) => {
+                const row = document.createElement('tr');
+                row.id = `row-${d.id}`;
+                row.className = `bg-white/5 hover:bg-white/10 transition-all rounded-[3rem] shadow-sm`;
+                
+                let details = d.data.map(s => `
+                    <div class="inline-block bg-slate-800 border border-white/10 p-3 rounded-2xl m-1 shadow-sm">
+                        <span class="text-[12px] font-black text-indigo-400 uppercase tracking-tighter">${s.type}:</span>
+                        <span class="text-xl font-bold text-white ml-1">${s.mod}${s.mode==='Modified'?'M':''}</span>
+                        <span class="text-[10px] text-slate-500 font-bold ml-2">(Old: ${s.base}${s.mode==='Modified'?'M':''})</span>
+                    </div>
+                `).join('');
+
+                row.innerHTML = `
+                    <td class="px-8 py-10 rounded-l-[3rem]">
+                        <div class="font-black text-3xl text-white uppercase tracking-tighter leading-none">${d.name}</div>
+                        <div class="text-[10px] text-slate-500 font-bold mt-3 uppercase tracking-widest font-sans">Sync Date: ${d.added}</div>
+                    </td>
+                    <td class="px-8 py-10">${details}</td>
+                    <td class="px-8 py-10 text-center">
+                        <div id="timer-${d.id}" class="text-2xl font-mono font-black text-emerald-400">--:--:--</div>
+                    </td>
+                    <td class="px-8 py-10 text-center rounded-r-[3rem]">
+                        <div class="flex justify-center gap-3">
+                            <button onclick="view(${i})" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl text-[11px] font-black uppercase">Audit Info</button>
+                            <button onclick="erase(${i})" class="text-rose-500 hover:text-rose-400 p-3"><i class="fas fa-trash-alt text-xl"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            updateTimers(); 
+        }
+
+        function updateTimers() {
+            db.forEach(d => {
+                const timerEl = document.getElementById(`timer-${d.id}`);
+                const rowEl = document.getElementById(`row-${d.id}`);
+                if (!timerEl || !rowEl) return;
+
+                const timeLeft = d.expiry - Date.now();
+                if (timeLeft <= 0) {
+                    timerEl.innerText = "⚠ EXPIRED";
+                    timerEl.classList.replace('text-emerald-400', 'text-rose-500');
+                    timerEl.classList.add('animate-pulse');
+                    rowEl.classList.add('alarm-row');
+                } else {
+                    timerEl.innerText = format(timeLeft);
+                }
+            });
+        }
+
+        function filterDatabase() {
+            const nameTerm = document.getElementById('searchClient').value.toLowerCase();
+            const serviceTerm = document.getElementById('searchService').value;
+            const filtered = db.filter(d => {
+                const matchesName = d.name.toLowerCase().includes(nameTerm);
+                const matchesService = serviceTerm === "" || d.data.some(s => s.type === serviceTerm);
+                return matchesName && matchesService;
+            });
+            renderInitialTable(filtered);
+        }
+
+        function format(ms) {
+            let s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60), d = Math.floor(h / 24);
+            return `${d}d ${h % 24}h ${m % 60}m ${s % 60}s`;
+        }
+
+        function view(i) {
+            const d = db[i];
+            const content = document.getElementById('modalContent');
+            let serviceDetails = d.data.map(s => `
+                <div class="bg-white/5 p-3 rounded-xl border border-white/5 flex justify-between items-center">
+                    <span class="font-black text-indigo-400">${s.type}</span>
+                    <span class="font-bold text-white">${s.mod}${s.mode==='Modified'?'Mb':''}</span>
+                    <span class="text-[10px] text-slate-500">Base: ${s.base}${s.mode==='Modified'?'Mb':''}</span>
+                </div>`).join('');
+
+            content.innerHTML = `
+                <div class="space-y-5 text-slate-200">
+                    <div class="flex justify-between border-b border-white/10 pb-3"><span class="text-[11px] font-black text-slate-500 uppercase">Target Client:</span> <span class="text-emerald-400 font-black text-xl uppercase">${d.name}</span></div>
+                    <div class="flex justify-between border-b border-white/10 pb-3"><span class="text-[11px] font-black text-slate-500 uppercase">Requested By:</span> <span class="font-bold">${d.req}</span></div>
+                    <div class="flex justify-between border-b border-white/10 pb-3"><span class="text-[11px] font-black text-slate-500 uppercase">Assignee:</span> <span class="text-indigo-400 font-bold">${d.eng}</span></div>
+                    <div class="mt-6"><p class="text-[11px] font-black text-slate-500 uppercase mb-3">Service Modifications:</p><div class="grid grid-cols-1 gap-2">${serviceDetails}</div></div>
+                    <div class="mt-6"><p class="text-[11px] font-black text-slate-500 uppercase mb-3">Context:</p><div class="bg-white/5 p-6 rounded-3xl italic text-base border border-white/5">"${d.reason || 'Verified signature.'}"</div></div>
+                </div>`;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function erase(i) { if(confirm("Permanently erase record?")) { db.splice(i, 1); localStorage.setItem('jesan_provision_v1.9.2', JSON.stringify(db)); filterDatabase(); } }
+
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+        setInterval(updateTimers, 1000);
+
+        renderInitialTable();
+    </script>
+</body>
+</html>
